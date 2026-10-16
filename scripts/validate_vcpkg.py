@@ -66,6 +66,8 @@ def validate_vcpkg(project, env):
             hidden = headers.with_name("include.consumer-hidden")
             headers.rename(hidden)
             try:
+                assert hidden.is_dir() and not headers.exists(), "Source headers were not hidden"
+                print(f"Source headers absent during installed consumer: {headers}", flush=True)
                 for configuration in ("Release", "Debug"):
                     build = consumer / f"build-{configuration}"
                     options = ["-G", "Visual Studio 17 2022", "-A", "x64"] if windows else [
@@ -78,14 +80,20 @@ def validate_vcpkg(project, env):
                          "-DCMAKE_FIND_USE_SYSTEM_PACKAGE_REGISTRY=OFF",
                          f"-DEXPECTED_PREFIX={prefix.as_posix()}", f"-DEXPECTED_LINKAGE={expected_linkage}"],
                         cwd=consumer, env=env)
+                    assert hidden.is_dir() and not headers.exists(), "Source headers appeared during configure"
                     run(["cmake", "--build", build, "--config", configuration], cwd=consumer, env=env)
+                    assert hidden.is_dir() and not headers.exists(), "Source headers appeared during build"
                     runtime_env = env.copy()
                     runtime_bin = prefix / ("debug/bin" if configuration == "Debug" else "bin")
                     runtime_env["PATH"] = str(runtime_bin) + os.pathsep + env["PATH"]
                     run(["ctest", "--test-dir", build, "-C", configuration, "--no-tests=error", "--verbose"],
                         cwd=consumer, env=runtime_env)
+                    assert hidden.is_dir() and not headers.exists(), "Source headers appeared during tests"
+                    print(f"Source headers remained absent: {configuration}", flush=True)
             finally:
                 hidden.rename(headers)
+            assert headers.is_dir() and not hidden.exists(), "Source header restoration failed"
+            print("Source headers restored; hidden path absent.", flush=True)
             print(f"vcpkg consumer passed: {linkage} triplet -> {expected_linkage} library, Release + Debug, relocated install, source headers hidden.", flush=True)
         downloads = vcpkg_root / "downloads"
         assert not [p for d in (downloads, downloads / "tools") if d.exists() for p in d.iterdir()
