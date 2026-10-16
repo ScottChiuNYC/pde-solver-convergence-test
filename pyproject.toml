@@ -19,7 +19,7 @@ include = [
     { path = "vcpkg-ports/pde-software-replication-core/*", format = "sdist" },
     { path = "cpp/CMakeLists.txt", format = "sdist" },
     { path = "cpp/bindings/*.*", format = "sdist" },
-    { path = "cpp/include/pde_software_replication_core/*.*", format = "sdist" },
+    { path = "cpp/include/pde_software_replication_core", format = "sdist" },
     { path = "cpp/src/*.*", format = "sdist" },
     { path = "examples/cpp/*.*", format = "sdist" },
     { path = "tests/cpp/*.*", format = "sdist" },

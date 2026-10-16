@@ -3,6 +3,7 @@ from pathlib import Path
 import argparse
 import json
 import os
+import subprocess
 import sys
 import tempfile
 import venv
@@ -22,6 +23,13 @@ def main():
     if selected.exists():
         os.environ["VCPKG_ROOT"] = selected.read_text(encoding="utf-8")
     py, env, options = tool_environment(project, tools)
+    # Bind numerical evidence to the actual checkout (including PR merge commits),
+    # rather than trusting a caller's stale revision or the CI event's base SHA.
+    revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=project, text=True).strip()
+    if len(revision) != 40 or any(c not in "0123456789abcdefABCDEF" for c in revision):
+        raise SystemExit(f"Invalid checked-out source revision: {revision!r}")
+    env["C2C_SOURCE_REVISION"] = revision
+    print(f"Validation source revision: {revision}", flush=True)
     windows = sys.platform == "win32"
     configure = "windows-vcpkg" if windows else "linux-vcpkg-release"
     build = "windows-release" if windows else "linux-release"

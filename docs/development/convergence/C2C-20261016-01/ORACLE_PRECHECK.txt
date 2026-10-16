@@ -1,0 +1,12 @@
+Prepared before any domain implementation. Baseline: 17fae54f55ac67e56b18eec9f39242ea7d7786fd
+Compiler: g++ (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0
+Compile command: g++ -std=c++17 -O2 -Wall -Wextra -pedantic -Itests/cpp docs/development/convergence/C2C-20261016-01/acceptance_oracle_precheck.cpp -o /workspace/scratch/31534520b72e/acceptance_oracle_precheck
+Compile exit: 0
+Run exit: 0
+one_row theta=0.5 interior=4.333333333333333 analytic=4.333333333333333
+one_row theta=0.75 interior=4 analytic=4
+one_row theta=1 interior=3.7999999999999998 analytic=3.7999999999999998
+mixed_dense theta=0.5 values=1.4750000000000001,1.4837477335644533,1.617341530150634,1.8197107281757376,2.0275933135605659,2.226756092014901,2.3500000000000001,
+mixed_dense theta=0.75 values=1.4750000000000001,1.483433410142267,1.6193133527926227,1.8196833467275149,2.0353971269158837,2.225047764670359,2.3500000000000001,
+mixed_dense theta=1 values=1.4750000000000001,1.4820856610513613,1.6184653684482984,1.8215258574999409,2.0403246074654646,2.2297270883106557,2.3500000000000001,
+PASS: oracle has no production dependency; known dense solve, exact row, norm, safe mean checked

@@ -1,0 +1,28 @@
+Pre-implementation declarations-only syntax check; not production compilation.
+API declaration text SHA256: 8008f6b48568a3c2118742631ee1ac1fffb401eae3938583df5d9c95d804086f
+Command: g++ -std=c++17 -Wall -Wextra -pedantic -fsyntax-only -I/workspace/scratch/31534520b72e/acceptance-syntax-only/include -I/workspace/scratch/31534520b72e/baseline-check/build/linux-vcpkg-release/vcpkg_installed/x64-linux/include /workspace/scratch/31534520b72e/target/tests/cpp/acceptance_arithmetic.cpp /workspace/scratch/31534520b72e/target/tests/cpp/acceptance_callbacks.cpp /workspace/scratch/31534520b72e/target/tests/cpp/acceptance_numerics.cpp /workspace/scratch/31534520b72e/target/tests/cpp/acceptance_public_helpers.cpp /workspace/scratch/31534520b72e/target/tests/cpp/acceptance_tridiagonal.cpp /workspace/scratch/31534520b72e/target/tests/cpp/acceptance_umbrella_a.cpp /workspace/scratch/31534520b72e/target/tests/cpp/acceptance_umbrella_b.cpp
+Exit code: 0
+In file included from /workspace/scratch/31534520b72e/target/tests/cpp/acceptance_test_support.h:3,
+                 from /workspace/scratch/31534520b72e/target/tests/cpp/acceptance_arithmetic.cpp:1:
+/workspace/scratch/31534520b72e/acceptance-syntax-only/include/pde_software_replication_core/PDE.h:96:33: warning: inline function ‘PDE::Scheme::CrankNicholson1D PDE::makeSolver1D(const Grid1D&, const PDE1D&)’ used but never defined
+   96 | inline Scheme::CrankNicholson1D makeSolver1D(Grid1D const& grid,
+      |                                 ^~~~~~~~~~~~
+In file included from /workspace/scratch/31534520b72e/target/tests/cpp/acceptance_test_support.h:3,
+                 from /workspace/scratch/31534520b72e/target/tests/cpp/acceptance_callbacks.cpp:1:
+/workspace/scratch/31534520b72e/acceptance-syntax-only/include/pde_software_replication_core/PDE.h:96:33: warning: inline function ‘PDE::Scheme::CrankNicholson1D PDE::makeSolver1D(const Grid1D&, const PDE1D&)’ used but never defined
+   96 | inline Scheme::CrankNicholson1D makeSolver1D(Grid1D const& grid,
+      |                                 ^~~~~~~~~~~~
+In file included from /workspace/scratch/31534520b72e/target/tests/cpp/acceptance_test_support.h:3,
+                 from /workspace/scratch/31534520b72e/target/tests/cpp/acceptance_numerics.cpp:1:
+/workspace/scratch/31534520b72e/acceptance-syntax-only/include/pde_software_replication_core/PDE.h:96:33: warning: inline function ‘PDE::Scheme::CrankNicholson1D PDE::makeSolver1D(const Grid1D&, const PDE1D&)’ used but never defined
+   96 | inline Scheme::CrankNicholson1D makeSolver1D(Grid1D const& grid,
+      |                                 ^~~~~~~~~~~~
+In file included from /workspace/scratch/31534520b72e/target/tests/cpp/acceptance_test_support.h:3,
+                 from /workspace/scratch/31534520b72e/target/tests/cpp/acceptance_public_helpers.cpp:1:
+/workspace/scratch/31534520b72e/acceptance-syntax-only/include/pde_software_replication_core/PDE.h:96:33: warning: inline function ‘PDE::Scheme::CrankNicholson1D PDE::makeSolver1D(const Grid1D&, const PDE1D&)’ used but never defined
+   96 | inline Scheme::CrankNicholson1D makeSolver1D(Grid1D const& grid,
+      |                                 ^~~~~~~~~~~~
+In file included from /workspace/scratch/31534520b72e/target/tests/cpp/acceptance_umbrella_a.cpp:1:
+/workspace/scratch/31534520b72e/acceptance-syntax-only/include/pde_software_replication_core/PDE.h:96:33: warning: inline function ‘PDE::Scheme::CrankNicholson1D PDE::makeSolver1D(const Grid1D&, const PDE1D&)’ used but never defined
+   96 | inline Scheme::CrankNicholson1D makeSolver1D(Grid1D const& grid,
+      |                                 ^~~~~~~~~~~~

@@ -1,0 +1,7 @@
+Actual unimplemented baseline compile probe. This is an expected failure, not an acceptance pass.
+Command: g++ -std=c++17 -fsyntax-only -Icpp/include tests/cpp/acceptance_umbrella_a.cpp
+Exit code: 1
+tests/cpp/acceptance_umbrella_a.cpp:1:10: fatal error: pde_software_replication_core/PDE.h: No such file or directory
+    1 | #include <pde_software_replication_core/PDE.h>
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+compilation terminated.

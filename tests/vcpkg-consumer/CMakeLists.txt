@@ -47,3 +47,24 @@ add_executable(consumer main.cpp)
 target_link_libraries(consumer PRIVATE ${library_target})
 enable_testing()
 add_test(NAME consumer COMMAND consumer)
+
+# Compile each actual installed header, twice in its own translation unit.
+# These probes run while validate_vcpkg.py hides the entire source include root.
+set(installed_include "${EXPECTED_PREFIX}/include")
+file(GLOB_RECURSE installed_headers RELATIVE "${installed_include}"
+    "${installed_include}/pde_software_replication_core/*.h"
+    "${installed_include}/pde_software_replication_core/*.hpp"
+    "${installed_include}/pde_software_replication_core/*.hh")
+if(NOT installed_headers)
+    message(FATAL_ERROR "No installed public headers to validate")
+endif()
+set(header_probes)
+foreach(header IN LISTS installed_headers)
+    string(MAKE_C_IDENTIFIER "${header}" probe_name)
+    set(probe "${CMAKE_CURRENT_BINARY_DIR}/header_${probe_name}.cpp")
+    file(WRITE "${probe}" "#include <${header}>\n#include <${header}>\n")
+    list(APPEND header_probes "${probe}")
+    message(STATUS "Installed self-contained header: ${header}")
+endforeach()
+add_library(installed_header_probes OBJECT ${header_probes})
+target_link_libraries(installed_header_probes PRIVATE ${library_target})
