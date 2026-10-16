@@ -1,0 +1,47 @@
+[tool.poetry]
+name = "pde_software_replication"
+version = "0.1.0"
+description = "Fresh project skeleton for testing Frozen Contract-to-Code convergence."
+authors = ["Your Name \u003cyou@example.com\u003e"]
+readme = "README.md"
+
+include = [
+    { path = "scripts/*.py", format = "sdist" },
+    { path = "scripts/tool-requirements.txt", format = "sdist" },
+    # Native build inputs required when rebuilding from the source distribution.
+    { path = "CMakeLists.txt", format = "sdist" },
+    { path = "CMakePresets.json", format = "sdist" },
+    { path = "cmake/*", format = "sdist" },
+    { path = "build.py", format = "sdist" },
+    { path = "vcpkg.json", format = "sdist" },
+    { path = "vcpkg-configuration.json", format = "sdist" },
+    { path = "vcpkg-ports/gtest/*", format = "sdist" },
+    { path = "vcpkg-ports/pde-software-replication-core/*", format = "sdist" },
+    { path = "cpp/CMakeLists.txt", format = "sdist" },
+    { path = "cpp/bindings/*.*", format = "sdist" },
+    { path = "cpp/include/pde_software_replication_core/*.*", format = "sdist" },
+    { path = "cpp/src/*.*", format = "sdist" },
+    { path = "examples/cpp/*.*", format = "sdist" },
+    { path = "tests/cpp/*.*", format = "sdist" },
+    { path = "tests/vcpkg-consumer/*", format = "sdist" },
+    # C extensions must be included in the wheel distribution.
+    { path = "src/pde_software_replication/*.pyd", format = "wheel" },
+    { path = "src/pde_software_replication/*.so", format = "wheel" },
+]
+exclude = [
+    "cpp/*",
+]
+
+[tool.poetry.build]
+generate-setup-file = false
+script = "build.py"
+
+[tool.poetry.dependencies]
+python = ">=3.12"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.0"
+
+[build-system]
+requires = ["poetry-core==2.5.0", "cmake==3.31.10", "ninja==1.13.2"]
+build-backend = "poetry.core.masonry.api"

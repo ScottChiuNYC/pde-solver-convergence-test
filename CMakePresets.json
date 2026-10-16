@@ -1,0 +1,96 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 25,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "vcpkg-base",
+      "hidden": true,
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+        "BUILD_TESTING": true
+      }
+    },
+    {
+      "name": "windows-vcpkg",
+      "displayName": "Windows x64 with vcpkg",
+      "inherits": "vcpkg-base",
+      "generator": "Visual Studio 17 2022",
+      "architecture": "x64"
+    },
+    {
+      "name": "linux-vcpkg-debug",
+      "displayName": "Linux Debug with vcpkg",
+      "inherits": "vcpkg-base",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "linux-vcpkg-release",
+      "displayName": "Linux Release with vcpkg",
+      "inherits": "vcpkg-base",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "windows-debug",
+      "configurePreset": "windows-vcpkg",
+      "configuration": "Debug"
+    },
+    {
+      "name": "windows-release",
+      "configurePreset": "windows-vcpkg",
+      "configuration": "Release"
+    },
+    {
+      "name": "linux-debug",
+      "configurePreset": "linux-vcpkg-debug"
+    },
+    {
+      "name": "linux-release",
+      "configurePreset": "linux-vcpkg-release"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "windows-debug-tests",
+      "configurePreset": "windows-vcpkg",
+      "configuration": "Debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "windows-release-tests",
+      "configurePreset": "windows-vcpkg",
+      "configuration": "Release",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "linux-debug-tests",
+      "configurePreset": "linux-vcpkg-debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "linux-release-tests",
+      "configurePreset": "linux-vcpkg-release",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}

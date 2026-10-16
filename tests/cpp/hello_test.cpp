@@ -1,0 +1,19 @@
+#include <gtest/gtest.h>
+#include "pde_software_replication_core/hello.h"
+
+// Test hello function
+TEST(HelloTest, ReturnsCorrectString) {
+    std::string result = hello();
+    EXPECT_EQ(result, "Hello, World!");
+}
+
+// Test hello function is not empty
+TEST(HelloTest, NotEmpty) {
+    std::string result = hello();
+    EXPECT_FALSE(result.empty());
+}
+
+int main(int argc, char **argv) {
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
+}

@@ -1,0 +1,18 @@
+{
+    "configurations": [
+        {
+            "name": "x64-windows",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/build/windows-vcpkg/vcpkg_installed/x64-windows/include"
+            ],
+            "defines": [],
+            "compilerPath": "cl.exe",
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "msvc-x64",
+            "configurationProvider": "ms-vscode.cmake-tools"
+        }
+    ],
+    "version": 4
+}

@@ -1,0 +1,10 @@
+{
+  "name": "pde-software-replication-core",
+  "version-string": "0.1.0",
+  "description": "Fresh project skeleton for testing Frozen Contract-to-Code convergence.",
+  "license": "MIT",
+  "dependencies": [
+    { "name": "vcpkg-cmake", "host": true },
+    { "name": "vcpkg-cmake-config", "host": true }
+  ]
+}

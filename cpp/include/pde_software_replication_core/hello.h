@@ -1,0 +1,8 @@
+#ifndef PDE_SOFTWARE_REPLICATION_CORE_HELLO_H_
+#define PDE_SOFTWARE_REPLICATION_CORE_HELLO_H_
+
+#include <string>
+
+std::string hello();
+
+#endif  // PDE_SOFTWARE_REPLICATION_CORE_HELLO_H_

@@ -1,0 +1,20 @@
+"""Poetry native build hook; uses the same tool-path setup as development/CI."""
+from pathlib import Path
+import os
+import sys
+
+ROOT = Path(__file__).resolve().parent
+sys.path.insert(0, str(ROOT / "scripts"))
+from bootstrap import run, tool_environment
+
+
+def build():
+    _, env, options = tool_environment(ROOT)
+    configure = os.environ.get("PDE_SOFTWARE_REPLICATION_CMAKE_CONFIGURE_PRESET", "windows-vcpkg" if sys.platform == "win32" else "linux-vcpkg-release")
+    build_preset = os.environ.get("PDE_SOFTWARE_REPLICATION_CMAKE_BUILD_PRESET", "windows-release" if sys.platform == "win32" else "linux-release")
+    run(["cmake", "--preset", configure, f"-DPython_EXECUTABLE:FILEPATH={sys.executable}", *options], cwd=ROOT, env=env)
+    run(["cmake", "--build", "--preset", build_preset], cwd=ROOT, env=env)
+
+
+if __name__ == "__main__":
+    build()

@@ -1,0 +1,14 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "C++ Launch (Windows)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/windows-vcpkg/tests/cpp/Debug/pde_software_replication_core_test.exe",
+            "stopAtEntry": false,
+            "preLaunchTask": "CMake: build (Debug)",
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}

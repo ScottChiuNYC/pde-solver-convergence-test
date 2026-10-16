@@ -1,0 +1,3 @@
+def hello() -> str:
+    """A function that returns a Hello World string."""
+    ...

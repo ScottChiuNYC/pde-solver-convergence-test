@@ -1,0 +1,8 @@
+{
+    // "github.copilot.enable": {
+    //     "*": false
+    // },
+    "files.associations": {
+        "cmath": "cpp"
+    }
+}

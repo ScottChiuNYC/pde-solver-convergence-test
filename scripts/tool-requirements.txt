@@ -1,0 +1,6 @@
+copier==9.19.1
+cmake==3.31.10
+ninja==1.13.2
+poetry==2.5.1
+build==1.6.1
+pytest==7.4.4
