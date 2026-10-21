@@ -1,9 +1,16 @@
 name: Build and Test
 
+# Development documentation and audit-only commits do not need Linux/Windows builds.
+# For push and pull_request, GitHub skips this workflow only when ALL changed
+# files are inside docs/development/. Changes elsewhere still trigger build CI.
 on:
   workflow_dispatch:
   push:
+    paths-ignore:
+      - 'docs/development/**'
   pull_request:
+    paths-ignore:
+      - 'docs/development/**'
 
 permissions:
   contents: read
