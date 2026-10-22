@@ -3,13 +3,17 @@
 ## Pipeline
 
 ```text
-Markdown/tool validation
+skill/tool validation
+-> tracked-files-only staging tree
+-> publication-only Markdown math normalization
 -> CodeBinder conversion
 -> Sphinx / LaTeX build
 -> structural and rendered-text PDF validation
 -> GitHub Actions artifact
 -> optional Google Drive upload from main
 ```
+
+The staging tree is created from `git archive HEAD`. Publication compatibility transformations apply only there and never mutate repository authority such as a Frozen Essence.
 
 The workflow does not execute project notebooks or application/research code merely to create the PDF.
 

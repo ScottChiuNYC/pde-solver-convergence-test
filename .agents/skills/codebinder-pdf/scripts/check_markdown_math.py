@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fail on common Markdown/math delimiter mistakes."""
+"""Validate Markdown math delimiters and normalize legacy display math in staging copies."""
 
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ def _is_escaped(text: str, index: int) -> bool:
 
 
 def _mask_indented_code(text: str) -> str:
-    """Mask CommonMark-style indented code blocks while preserving line positions."""
+    """Mask CommonMark-style indented code blocks while preserving positions."""
 
     masked: list[str] = []
     in_block = False
@@ -86,7 +86,7 @@ def _mask_fenced_code(text: str) -> tuple[str, bool]:
 
 
 def _mask_inline_code(text: str) -> str:
-    """Mask valid CommonMark backtick spans while preserving line positions."""
+    """Mask valid CommonMark backtick spans while preserving positions."""
 
     runs: list[tuple[int, int]] = []
     cursor = 0
@@ -131,6 +131,31 @@ def _mask_protected_regions(text: str) -> tuple[str, bool]:
     return _mask_inline_code(masked), unclosed_fence
 
 
+def normalize_unsupported_display_math(text: str) -> tuple[str, int]:
+    """Convert unescaped \\[ / \\] outside code to $$ without changing length."""
+
+    masked, _ = _mask_protected_regions(text)
+    characters = list(text)
+    replacements = 0
+
+    for match in UNSUPPORTED_DISPLAY_MATH_RE.finditer(masked):
+        start, end = match.span()
+        # Both legacy delimiters and "$$" are two characters, so all later
+        # character offsets remain stable.
+        characters[start:end] = ["$", "$"]
+        replacements += 1
+
+    return "".join(characters), replacements
+
+
+def normalize_path(path: Path) -> int:
+    text = path.read_text(encoding="utf-8")
+    normalized, replacements = normalize_unsupported_display_math(text)
+    if replacements:
+        path.write_text(normalized, encoding="utf-8")
+    return replacements
+
+
 def validate(path: Path) -> list[str]:
     errors: list[str] = []
     text = path.read_text(encoding="utf-8")
@@ -167,21 +192,45 @@ def validate(path: Path) -> list[str]:
 
 
 def main(argv: list[str]) -> int:
-    paths = [Path(arg) for arg in argv[1:]]
+    args = list(argv[1:])
+    normalize = bool(args and args[0] == "--normalize")
+    if normalize:
+        args = args[1:]
+
+    paths = [Path(arg) for arg in args]
     if not paths:
-        print("usage: check_markdown_math.py <file.md> [file.md ...]", file=sys.stderr)
+        mode = " --normalize" if normalize else ""
+        print(
+            f"usage: check_markdown_math.py{mode} <file.md> [file.md ...]",
+            file=sys.stderr,
+        )
         return 2
+
     errors: list[str] = []
+    normalized = 0
+    validated = 0
     for path in paths:
-        if path.suffix.lower() == ".md":
-            try:
-                errors.extend(validate(path))
-            except (OSError, UnicodeDecodeError) as exc:
-                errors.append(f"{path}: {exc}")
+        if path.suffix.lower() != ".md":
+            continue
+        try:
+            if normalize:
+                normalized += normalize_path(path)
+            errors.extend(validate(path))
+            validated += 1
+        except (OSError, UnicodeDecodeError) as exc:
+            errors.append(f"{path}: {exc}")
+
     if errors:
         print("\n".join(errors), file=sys.stderr)
         return 1
-    print(f"validated {len(paths)} Markdown file(s)")
+
+    if normalize:
+        print(
+            f"normalized {normalized} legacy display-math delimiter(s); "
+            f"validated {validated} Markdown file(s)"
+        )
+    else:
+        print(f"validated {validated} Markdown file(s)")
     return 0
 
 

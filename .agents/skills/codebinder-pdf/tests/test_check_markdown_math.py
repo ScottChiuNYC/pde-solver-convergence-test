@@ -29,6 +29,29 @@ class CheckMarkdownMathTest(unittest.TestCase):
         self.assertTrue(any("unsupported display-math delimiter" in error and r"\[" in error for error in errors))
         self.assertTrue(any("unsupported display-math delimiter" in error and r"\]" in error for error in errors))
 
+    def test_normalizes_backslash_display_math_without_source_semantic_change(self) -> None:
+        source = "Before\n\n\\[\n\\alpha + \\beta\n\\]\nAfter\n"
+        normalized, count = check_markdown_math.normalize_unsupported_display_math(source)
+        self.assertEqual(count, 2)
+        self.assertEqual(normalized, "Before\n\n$$\n\\alpha + \\beta\n$$\nAfter\n")
+        self.assertEqual(len(normalized), len(source))
+
+    def test_normalization_ignores_code_and_escaped_delimiters(self) -> None:
+        source = (
+            "`\\[inline\\]`\n\n"
+            "```text\n\\[fenced\\]\n```\n\n"
+            "    \\[indented\\]\n\n"
+            "\\\\[escaped\\\\]\n\n"
+            "\\[real\\]\n"
+        )
+        normalized, count = check_markdown_math.normalize_unsupported_display_math(source)
+        self.assertEqual(count, 2)
+        self.assertIn("`\\[inline\\]`", normalized)
+        self.assertIn("\\[fenced\\]", normalized)
+        self.assertIn("    \\[indented\\]", normalized)
+        self.assertIn("\\\\[escaped\\\\]", normalized)
+        self.assertIn("$$real$$", normalized)
+
     def test_ignores_delimiters_in_code(self) -> None:
         errors = self.validate_text(
             "`\\[literal\\]`\n\n"
@@ -54,7 +77,7 @@ class CheckMarkdownMathTest(unittest.TestCase):
         self.assertEqual(len(errors), 2)
 
     def test_escaped_and_mismatched_backticks_do_not_hide_delimiters(self) -> None:
-        escaped = self.validate_text("\\` before \\[bad\\] after \\`\n")
+        escaped = self.validate_text("\\` before \\[bad\\] after \\`\\n")
         mismatched = self.validate_text("prefix ``` \\[bad\\] `` suffix\n")
         self.assertEqual(len(escaped), 2)
         self.assertEqual(len(mismatched), 2)
