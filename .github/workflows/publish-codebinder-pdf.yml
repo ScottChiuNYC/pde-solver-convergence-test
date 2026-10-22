@@ -1,0 +1,219 @@
+name: Publish CodeBinder PDF
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, reopened, synchronize]
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: codebinder-pdf-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-pdf:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate ART CodeBinder skill and Markdown
+        shell: bash
+        run: |
+          set -euo pipefail
+          skill='.agents/skills/codebinder-pdf'
+          python -m unittest discover -s "$skill/tests" -p 'test_*.py'
+          python -m py_compile             "$skill/scripts/check_markdown_math.py"             "$skill/scripts/disable_pdf_bookmarks.py"             "$skill/scripts/validate_pdf_build.py"             "$skill/scripts/upload_to_google_drive.py"
+          mapfile -t markdown < <(git ls-files '*.md')
+          if (( ${#markdown[@]} > 0 )); then
+            python "$skill/scripts/check_markdown_math.py" "${markdown[@]}"
+          fi
+
+      - name: Install PDF dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends             pandoc latexmk poppler-utils             texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended             texlive-science texlive-xetex texlive-luatex texlive-lang-chinese             fonts-freefont-otf fonts-noto-cjk fontconfig
+          sudo fc-cache -f
+          python -m pip install --upgrade pip
+          python -m pip install             'git+https://github.com/ScottChiuNYC/codebinder.git@317333d89183252fa8fb21b3e7168a912053132e'             sphinx nbsphinx sphinx-rtd-theme sphinx-copybutton             google-api-python-client google-auth google-auth-httplib2
+
+      - name: Convert repository with CodeBinder
+        shell: bash
+        run: |
+          set -euo pipefail
+          skill='.agents/skills/codebinder-pdf'
+          rm -rf build/codebinder-source build/sphinx dist
+          mkdir -p build
+          python -m codebinder . build/codebinder-source
+
+          [[ -f build/codebinder-source/AGENTS.md.ipynb ]] || {
+            echo '::error::CodeBinder conversion omitted AGENTS.md'
+            exit 1
+          }
+          [[ ! -e build/codebinder-source/build/codebinder-source ]] || {
+            echo '::error::CodeBinder recursively ingested generated output'
+            exit 1
+          }
+
+          cp "$skill/scripts/sphinx/conf.py" build/codebinder-source/conf.py
+          cat >> build/codebinder-source/conf.py <<'PYCONF'
+          latex_elements = {
+              "fontpkg": r"""
+          \usepackage{iftex}
+          \setmainfont{Noto Serif CJK SC}
+          \setsansfont{Noto Sans CJK SC}
+          \setmonofont{Noto Sans Mono CJK SC}
+          \ifXeTeX
+            \usepackage{xeCJK}
+            \setCJKmainfont[Scale=1.1]{Noto Serif CJK SC}
+            \setCJKsansfont[Scale=1.1]{Noto Sans CJK SC}
+            \setCJKmonofont[Scale=1.1]{Noto Sans Mono CJK SC}
+          \fi
+          """,
+              "preamble": r"""
+          \usepackage{fancyhdr}
+          \usepackage{mathrsfs}
+          \usepackage{iftex}
+          \ifXeTeX
+            \XeTeXlinebreaklocale "zh"
+            \XeTeXlinebreakskip = 0pt plus 1pt
+          \fi
+          \setcounter{tocdepth}{4}
+          \setcounter{secnumdepth}{4}
+          \geometry{left=72pt,right=72pt,top=89.43pt,bottom=114.50pt,headheight=0pt,headsep=0pt,footskip=8mm}
+          \fancypagestyle{normal}{\fancyhf{}\fancyfoot[C]{\thepage}\renewcommand{\headrulewidth}{0pt}\renewcommand{\footrulewidth}{0pt}}
+          \fancypagestyle{plain}{\fancyhf{}\fancyfoot[C]{\thepage}\renewcommand{\headrulewidth}{0pt}\renewcommand{\footrulewidth}{0pt}}
+          \AtBeginDocument{\pagestyle{normal}}
+          """,
+          }
+          PYCONF
+
+      - name: Build and validate PDF
+        env:
+          PDFSPHINX_PROJECT_NAME: ${{ github.event.repository.name }}
+          PDFSPHINX_AUTHOR: ${{ github.repository_owner }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          skill='.agents/skills/codebinder-pdf'
+          mkdir -p build/sphinx
+          python -m sphinx -b latex build/codebinder-source build/sphinx/latex 2>&1 | tee build/sphinx-latex.log
+
+          run_latexmk() {
+            local log_path="$1" engine="$2"
+            set +e
+            make -C build/sphinx/latex LATEXMKOPTS="-${engine} -interaction=nonstopmode -f" all-pdf 2>&1 | tee "$log_path"
+            local status=${PIPESTATUS[0]}
+            set -e
+            echo "latexmk status=${status} engine=${engine}" | tee -a "$log_path"
+          }
+
+          clean_aux() {
+            find build/sphinx/latex -maxdepth 1 -type f               \( -name '*.aux' -o -name '*.fdb_latexmk' -o -name '*.fls' -o -name '*.idx' -o -name '*.ilg' -o -name '*.ind' -o -name '*.lof' -o -name '*.lot' -o -name '*.out' -o -name '*.pdf' -o -name '*.toc' -o -name '*.xdv' \) -delete
+          }
+
+          validate_pdf() {
+            local log_path="$1" pdf_path toc_path
+            pdf_path=$(find build/sphinx/latex -maxdepth 1 -type f -name '*.pdf' -print -quit)
+            [[ -n "$pdf_path" ]] || return 1
+            toc_path="${pdf_path%.pdf}.toc"
+            python "$skill/scripts/validate_pdf_build.py" --pdf "$pdf_path" --toc "$toc_path" --log "$log_path" --min-entries 1 --min-pages 1
+          }
+
+          run_latexmk build/latexmk-primary.log xelatex
+          set +e; validate_pdf build/latexmk-primary.log; primary_status=$?; set -e
+          if [[ $primary_status -ne 0 ]]; then
+            echo '::warning::Primary XeLaTeX build invalid; retrying without PDF bookmarks.'
+            clean_aux
+            python "$skill/scripts/disable_pdf_bookmarks.py"
+            run_latexmk build/latexmk-fallback.log xelatex
+            set +e; validate_pdf build/latexmk-fallback.log; fallback_status=$?; set -e
+            if [[ $fallback_status -ne 0 ]]; then
+              echo '::warning::XeLaTeX fallback invalid; retrying with LuaLaTeX.'
+              clean_aux
+              run_latexmk build/latexmk-lualatex.log lualatex
+              validate_pdf build/latexmk-lualatex.log
+            fi
+          fi
+
+      - name: Upload PDF diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: repository-pdf-diagnostics
+          path: |
+            build/sphinx-latex.log
+            build/latexmk-*.log
+            build/sphinx/latex/*.tex
+            build/sphinx/latex/*.log
+            build/sphinx/latex/*.toc
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Collect PDF
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          pdf_path=$(find build/sphinx/latex -maxdepth 1 -type f -name '*.pdf' -print -quit)
+          [[ -n "$pdf_path" ]]
+          cp "$pdf_path" dist/repository-docs.pdf
+
+      - name: Upload PDF artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: repository-pdf
+          path: dist/repository-docs.pdf
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Detect Google Drive configuration
+        if: >-
+          (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+          (github.event_name == 'push' && github.ref == 'refs/heads/main')
+        id: drive-config
+        shell: bash
+        env:
+          GOOGLE_DRIVE_CLIENT_ID: ${{ secrets.GOOGLE_DRIVE_CLIENT_ID }}
+          GOOGLE_DRIVE_CLIENT_SECRET: ${{ secrets.GOOGLE_DRIVE_CLIENT_SECRET }}
+          GOOGLE_DRIVE_REFRESH_TOKEN: ${{ secrets.GOOGLE_DRIVE_REFRESH_TOKEN }}
+          GOOGLE_DRIVE_FOLDER_ID: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
+        run: |
+          set -euo pipefail
+          present=0
+          for name in GOOGLE_DRIVE_CLIENT_ID GOOGLE_DRIVE_CLIENT_SECRET GOOGLE_DRIVE_REFRESH_TOKEN GOOGLE_DRIVE_FOLDER_ID; do
+            [[ -n "${!name:-}" ]] && present=$((present + 1))
+          done
+          if [[ $present -eq 0 ]]; then
+            echo 'enabled=false' >> "$GITHUB_OUTPUT"
+            echo 'Google Drive publication disabled: no Drive secrets configured.' >> "$GITHUB_STEP_SUMMARY"
+          elif [[ $present -eq 4 ]]; then
+            echo 'enabled=true' >> "$GITHUB_OUTPUT"
+            echo 'Google Drive publication enabled.' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::error::Google Drive is partially configured (${present}/4 secrets present). Configure all four secrets or remove all four."
+            exit 1
+          fi
+
+      - name: Upload PDF to Google Drive
+        if: steps.drive-config.outputs.enabled == 'true'
+        env:
+          GOOGLE_DRIVE_CLIENT_ID: ${{ secrets.GOOGLE_DRIVE_CLIENT_ID }}
+          GOOGLE_DRIVE_CLIENT_SECRET: ${{ secrets.GOOGLE_DRIVE_CLIENT_SECRET }}
+          GOOGLE_DRIVE_REFRESH_TOKEN: ${{ secrets.GOOGLE_DRIVE_REFRESH_TOKEN }}
+          GOOGLE_DRIVE_FOLDER_ID: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
+        run: python .agents/skills/codebinder-pdf/scripts/upload_to_google_drive.py dist/repository-docs.pdf
