@@ -36,6 +36,22 @@ class CheckMarkdownMathTest(unittest.TestCase):
         self.assertEqual(normalized, "Before\n\n$$\n\\alpha + \\beta\n$$\nAfter\n")
         self.assertEqual(len(normalized), len(source))
 
+    def test_normalizes_texttt_underscore_for_latex(self) -> None:
+        source = r"\texttt{numeric_limits<double>::epsilon()}"
+        normalized, count = check_markdown_math.normalize_texttt_underscores(source)
+        self.assertEqual(count, 1)
+        self.assertEqual(
+            normalized,
+            r"\texttt{numeric\_limits<double>::epsilon()}",
+        )
+
+    def test_texttt_normalization_ignores_inline_code(self) -> None:
+        source = r"`\texttt{code_name}` and \texttt{real_name}"
+        normalized, count = check_markdown_math.normalize_texttt_underscores(source)
+        self.assertEqual(count, 1)
+        self.assertIn(r"`\texttt{code_name}`", normalized)
+        self.assertIn(r"\texttt{real\_name}", normalized)
+
     def test_normalization_ignores_code_and_escaped_delimiters(self) -> None:
         source = (
             "`\\[inline\\]`\n\n"

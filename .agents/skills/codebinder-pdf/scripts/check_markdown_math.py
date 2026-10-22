@@ -9,6 +9,7 @@ import sys
 
 FENCE_RE = re.compile(r"^\s*(`{3,}|~{3,})(.*)$")
 UNSUPPORTED_DISPLAY_MATH_RE = re.compile(r"(?<!\\)\\([\[\]])")
+TEXTTT_RE = re.compile(r"\\texttt\{([^{}]*)\}")
 
 
 def strip_escaped(text: str) -> str:
@@ -148,13 +149,34 @@ def normalize_unsupported_display_math(text: str) -> tuple[str, int]:
     return "".join(characters), replacements
 
 
+def normalize_texttt_underscores(text: str) -> tuple[str, int]:
+    """Escape bare underscores inside \\texttt{...} outside code regions."""
+
+    masked, _ = _mask_protected_regions(text)
+    matches = list(TEXTTT_RE.finditer(masked))
+    normalized = text
+    replacements = 0
+
+    # Work from right to left because escaping an underscore adds one character.
+    for match in reversed(matches):
+        start, end = match.span(1)
+        inner = normalized[start:end]
+        escaped, count = re.subn(r"(?<!\\)_", r"\\_", inner)
+        if count:
+            normalized = normalized[:start] + escaped + normalized[end:]
+            replacements += count
+
+    return normalized, replacements
+
+
 def normalize_path(path: Path) -> int:
     text = path.read_text(encoding="utf-8")
-    normalized, replacements = normalize_unsupported_display_math(text)
+    normalized, display_replacements = normalize_unsupported_display_math(text)
+    normalized, texttt_replacements = normalize_texttt_underscores(normalized)
+    replacements = display_replacements + texttt_replacements
     if replacements:
         path.write_text(normalized, encoding="utf-8")
     return replacements
-
 
 def validate(path: Path) -> list[str]:
     errors: list[str] = []
@@ -226,7 +248,7 @@ def main(argv: list[str]) -> int:
 
     if normalize:
         print(
-            f"normalized {normalized} legacy display-math delimiter(s); "
+            f"normalized {normalized} publication-compatibility construct(s); "
             f"validated {validated} Markdown file(s)"
         )
     else:

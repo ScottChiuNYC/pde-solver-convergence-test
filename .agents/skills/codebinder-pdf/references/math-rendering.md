@@ -6,7 +6,7 @@ ART must not require repository authority to be rewritten merely for publication
 
 ART therefore preserves two independent protections:
 
-1. The workflow builds a tracked-files-only staging tree and normalizes unescaped `\\[` and `\\]` outside code to `$$` **only in that staging copy**. Repository source files remain unchanged.
+1. The workflow builds a tracked-files-only staging tree and applies publication-only compatibility normalization **only in that staging copy**: unescaped `\\[` / `\\]` outside code become `$`, and bare `_` characters inside raw `\\texttt{...}` are escaped for LaTeX. Repository source files remain unchanged.
 2. Final-PDF validation extracts rendered text and fails if leaked `nbsphinx-math` role syntax is present.
 
 The deterministic implementations are:
