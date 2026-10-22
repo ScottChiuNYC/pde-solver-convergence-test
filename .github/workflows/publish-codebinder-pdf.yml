@@ -18,7 +18,7 @@ concurrency:
 jobs:
   build-pdf:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 90
 
     steps:
       - name: Check out repository
