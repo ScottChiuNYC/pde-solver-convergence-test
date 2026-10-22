@@ -31,17 +31,13 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Validate ART CodeBinder skill and Markdown
+      - name: Validate ART CodeBinder skill
         shell: bash
         run: |
           set -euo pipefail
           skill='.agents/skills/codebinder-pdf'
           python -m unittest discover -s "$skill/tests" -p 'test_*.py'
           python -m py_compile             "$skill/scripts/check_markdown_math.py"             "$skill/scripts/disable_pdf_bookmarks.py"             "$skill/scripts/validate_pdf_build.py"             "$skill/scripts/upload_to_google_drive.py"
-          mapfile -t markdown < <(git ls-files '*.md')
-          if (( ${#markdown[@]} > 0 )); then
-            python "$skill/scripts/check_markdown_math.py" "${markdown[@]}"
-          fi
 
       - name: Install PDF dependencies
         run: |
@@ -51,14 +47,24 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install             'git+https://github.com/ScottChiuNYC/codebinder.git@317333d89183252fa8fb21b3e7168a912053132e'             sphinx nbsphinx sphinx-rtd-theme sphinx-copybutton             google-api-python-client google-auth google-auth-httplib2
 
-      - name: Convert repository with CodeBinder
+      - name: Stage repository and convert with CodeBinder
         shell: bash
         run: |
           set -euo pipefail
           skill='.agents/skills/codebinder-pdf'
-          rm -rf build/codebinder-source build/sphinx dist
-          mkdir -p build
-          python -m codebinder . build/codebinder-source
+          rm -rf build/codebinder-input build/codebinder-source build/sphinx dist
+          mkdir -p build/codebinder-input
+
+          # Build a tracked-files-only staging tree so publication compatibility
+          # transforms never mutate repository authority such as a Frozen Essence.
+          git archive HEAD | tar -x -C build/codebinder-input
+
+          mapfile -t markdown < <(find build/codebinder-input -type f -name '*.md' -print)
+          if (( ${#markdown[@]} > 0 )); then
+            python "$skill/scripts/check_markdown_math.py" --normalize "${markdown[@]}"
+          fi
+
+          python -m codebinder build/codebinder-input build/codebinder-source
 
           [[ -f build/codebinder-source/AGENTS.md.ipynb ]] || {
             echo '::error::CodeBinder conversion omitted AGENTS.md'
