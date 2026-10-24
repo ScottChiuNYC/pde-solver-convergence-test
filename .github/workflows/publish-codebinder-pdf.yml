@@ -258,7 +258,12 @@ jobs:
             -e GOOGLE_DRIVE_CLIENT_SECRET \
             -e GOOGLE_DRIVE_REFRESH_TOKEN \
             -e GOOGLE_DRIVE_FOLDER_ID \
+            -e GITHUB_REPOSITORY \
+            -e GITHUB_SHA \
+            -e GITHUB_RUN_ID \
+            -e GITHUB_STEP_SUMMARY \
             -v "$GITHUB_WORKSPACE:/workspace" \
+            -v "$GITHUB_STEP_SUMMARY:$GITHUB_STEP_SUMMARY" \
             -w /workspace \
             "$PDF_IMAGE" \
             python .agents/skills/codebinder-pdf/scripts/upload_to_google_drive.py dist/repository-docs.pdf
