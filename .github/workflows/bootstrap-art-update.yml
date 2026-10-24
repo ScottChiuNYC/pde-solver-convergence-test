@@ -1,0 +1,59 @@
+name: Bootstrap ART Copier Update
+
+on:
+  push:
+    branches:
+      - update/art-ghcr-pdf
+    paths:
+      - .github/workflows/bootstrap-art-update.yml
+
+permissions:
+  contents: write
+
+jobs:
+  copier-update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out update branch
+        uses: actions/checkout@v4
+        with:
+          ref: update/art-ghcr-pdf
+          fetch-depth: 0
+
+      - name: Install Copier
+        run: python -m pip install 'copier==9.19.1'
+
+      - name: Run genuine ART Copier update
+        shell: bash
+        run: |
+          set -euo pipefail
+          copier update --defaults --trust --vcs-ref=f7ce12b6935945833bb74875e3aee22fb262d50b
+          if find . -name '*.rej' -print -quit | grep -q .; then
+            echo '::error::Copier produced .rej conflict files.'
+            find . -name '*.rej' -print
+            exit 1
+          fi
+          if git grep -n -E '^(<<<<<<<|=======|>>>>>>>)' -- . ':!.github/workflows/bootstrap-art-update.yml' >/tmp/copier-conflicts.txt; then
+            cat /tmp/copier-conflicts.txt
+            echo '::error::Copier produced inline conflict markers.'
+            exit 1
+          fi
+          git diff --check
+
+      - name: Remove one-time bootstrap and commit result
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f '.github/workflows/bootstrap-art-update.yml'
+          git add -A
+          git diff --cached --check
+          if git diff --cached --quiet; then
+            echo '::error::Copier update produced no changes.'
+            exit 1
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Update ART to GHCR PDF builder'
+          git push origin HEAD:update/art-ghcr-pdf
