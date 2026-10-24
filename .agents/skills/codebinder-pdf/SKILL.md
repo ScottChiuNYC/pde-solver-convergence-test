@@ -23,9 +23,9 @@ The canonical GitHub workflow is:
 
 The skill itself is portable across agent runtimes. Local environments may read the skill and run bundled validation helpers, and they may perform a full PDF build when the required CodeBinder/Sphinx/LaTeX dependencies are available.
 
-ART does not require local publication parity. The supported publication path is GitHub Actions, which owns the canonical repository PDF build, artifact upload, and optional Google Drive publication from `main`.
+ART does not require local publication parity. The supported publication path is GitHub Actions, which pulls an immutable, digest-pinned CodeBinder/TeX builder image from GHCR. The image owns heavy toolchain dependencies; this skill owns repository-specific behavior, validation, and publication rules.
 
-Do not force a local environment to install or reproduce the full publication stack merely because this skill is present.
+The same builder image is intended to remain usable later on a persistent self-hosted/VPS runner. Do not force a local environment to install or reproduce the full publication stack merely because this skill is present.
 
 ## Boundary
 
