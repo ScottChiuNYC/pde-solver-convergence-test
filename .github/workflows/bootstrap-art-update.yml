@@ -29,24 +29,32 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          copier update --defaults --trust --answers-file=.copier-answers.art.yml --vcs-ref=f7ce12b6935945833bb74875e3aee22fb262d50b
+          copier update \
+            --defaults \
+            --trust \
+            --answers-file=.copier-answers.art.yml \
+            --skip=.github/workflows/publish-codebinder-pdf.yml \
+            --vcs-ref=f7ce12b6935945833bb74875e3aee22fb262d50b
+
+          mapfile -t changed < <(git diff --name-only)
+          for file in "${changed[@]}"; do
+            [[ -f "$file" ]] || continue
+            if grep -n -E '^(<<<<<<< before updating|>>>>>>> after updating)$' "$file"; then
+              echo "::error::Copier produced inline conflict markers in $file."
+              exit 1
+            fi
+          done
           if find . -name '*.rej' -print -quit | grep -q .; then
             echo '::error::Copier produced .rej conflict files.'
             find . -name '*.rej' -print
             exit 1
           fi
-          if git grep -n -E '^(<<<<<<<|=======|>>>>>>>)' -- . ':!.github/workflows/bootstrap-art-update.yml' >/tmp/copier-conflicts.txt; then
-            cat /tmp/copier-conflicts.txt
-            echo '::error::Copier produced inline conflict markers.'
-            exit 1
-          fi
           git diff --check
 
-      - name: Remove one-time bootstrap and commit result
+      - name: Commit Copier-managed non-workflow changes
         shell: bash
         run: |
           set -euo pipefail
-          rm -f '.github/workflows/bootstrap-art-update.yml'
           git add -A
           git diff --cached --check
           if git diff --cached --quiet; then
@@ -55,5 +63,5 @@ jobs:
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m 'Update ART to GHCR PDF builder'
+          git commit -m 'Update ART Copier metadata and skill files'
           git push origin HEAD:update/art-ghcr-pdf
