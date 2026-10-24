@@ -29,7 +29,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          copier update --defaults --trust --vcs-ref=f7ce12b6935945833bb74875e3aee22fb262d50b
+          copier update --defaults --trust --answers-file=.copier-answers.art.yml --vcs-ref=f7ce12b6935945833bb74875e3aee22fb262d50b
           if find . -name '*.rej' -print -quit | grep -q .; then
             echo '::error::Copier produced .rej conflict files.'
             find . -name '*.rej' -print
