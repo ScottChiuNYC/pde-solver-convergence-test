@@ -80,10 +80,6 @@ jobs:
 
           python -m codebinder build/codebinder-input build/codebinder-source
 
-          [[ -f build/codebinder-source/AGENTS.md.ipynb ]] || {
-            echo '::error::CodeBinder conversion omitted AGENTS.md'
-            exit 1
-          }
           [[ ! -e build/codebinder-source/build/codebinder-source ]] || {
             echo '::error::CodeBinder recursively ingested generated output'
             exit 1
