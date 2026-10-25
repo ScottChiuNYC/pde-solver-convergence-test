@@ -1,0 +1,79 @@
+name: One-time Copier Update - CodeBinder Ignore Fragments
+
+on:
+  push:
+    branches:
+      - update/codebinder-ignore-fragments
+    paths:
+      - .github/workflows/copier-update-codebinder-ignore.yml
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out update branch
+        uses: actions/checkout@v4
+        with:
+          ref: update/codebinder-ignore-fragments
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Copier
+        run: python -m pip install 'copier==9.19.1'
+
+      - name: Configure git
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+      - name: Genuine Python/C++ Copier update
+        shell: bash
+        run: |
+          set -euo pipefail
+          copier update --defaults --conflict rej \
+            --answers-file .copier-answers.pypackage-cpp.yml \
+            --vcs-ref 0c35eeae03a171d865d05fea56c18e648dd5ecd0
+          if find . -name '*.rej' -print -quit | grep -q .; then
+            echo '::error::Python/C++ Copier update produced rejection files'
+            find . -name '*.rej' -print
+            exit 1
+          fi
+          test -f .codebinderignore.d/pypackage-cpp
+          git add -A
+          git commit -m 'Genuine Copier update Python/C++ template to 0c35eea'
+
+      - name: Genuine ART Copier update
+        shell: bash
+        run: |
+          set -euo pipefail
+          copier update --defaults --conflict rej \
+            --answers-file .copier-answers.art.yml \
+            --vcs-ref 25a163afab01501105d154c847fd16a52acbb3a2
+          if find . -name '*.rej' -print -quit | grep -q .; then
+            echo '::error::ART Copier update produced rejection files'
+            find . -name '*.rej' -print
+            exit 1
+          fi
+          test -f .codebinderignore.d/art
+          test ! -e .codebinderignore
+          cp .github/workflows/publish-codebinder-pdf.yml "$RUNNER_TEMP/publish-codebinder-pdf.yml.generated"
+          git checkout -- .github/workflows/publish-codebinder-pdf.yml
+          git add -A
+          git commit -m 'Genuine Copier update ART to 25a163a'
+
+      - name: Push generated non-workflow changes
+        run: git push origin HEAD:update/codebinder-ignore-fragments
+
+      - name: Upload generated ART workflow
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-codebinder-workflow
+          path: ${{ runner.temp }}/publish-codebinder-pdf.yml.generated
+          if-no-files-found: error
+          retention-days: 3
