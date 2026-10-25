@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  PDF_IMAGE: ghcr.io/scottchiunyc/art-codebinder-pdf@sha256:68c81e30b11e8d76d561cec65715f3d64871b27ba4e719d6a6affce44a6ac642
+  PDF_IMAGE: ghcr.io/scottchiunyc/art-codebinder-pdf@sha256:0270baad8b9528e6052840f9fa339312fb91efef09d85534cb5f05cd7153966d
 
 jobs:
   build-pdf:
