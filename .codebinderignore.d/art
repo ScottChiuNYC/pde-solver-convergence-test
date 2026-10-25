@@ -1,0 +1,7 @@
+# ART-owned agent/publication infrastructure that should not appear in
+# ICC/C2C review PDFs.
+
+.copier-answers.art.yml
+AGENTS.md
+.agents/skills/codebinder-pdf/**
+.github/workflows/publish-codebinder-pdf.yml
