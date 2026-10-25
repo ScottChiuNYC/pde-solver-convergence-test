@@ -44,6 +44,22 @@ jobs:
             find . -name '*.rej' -print
             exit 1
           fi
+          grep -q 'Independent overlays and review publication' docs/development/PROJECT_SKELETON_CONTRACT.md
+          mapfile -t changed < <(git status --porcelain | sed -E 's/^.. //')
+          printf '%s\n' "${changed[@]}"
+          for path in "${changed[@]}"; do
+            case "$path" in
+              .copier-answers.pypackage-cpp.yml|docs/development/PROJECT_SKELETON_CONTRACT.md)
+                ;;
+              *)
+                echo "::error::Unexpected Python/C++ Copier change: $path"
+                exit 1
+                ;;
+            esac
+          done
+          git add .copier-answers.pypackage-cpp.yml docs/development/PROJECT_SKELETON_CONTRACT.md
+          git diff --cached --check
+          git commit -m 'Genuine Copier update Python/C++ documentation'
 
       - name: Genuine ART Copier update
         shell: bash
@@ -57,35 +73,26 @@ jobs:
             find . -name '*.rej' -print
             exit 1
           fi
-
-      - name: Verify exact generated scope
-        shell: bash
-        run: |
-          set -euo pipefail
           grep -q 'Repository provenance and ownership' AGENTS.md
-          grep -q 'Independent overlays and review publication' docs/development/PROJECT_SKELETON_CONTRACT.md
           mapfile -t changed < <(git status --porcelain | sed -E 's/^.. //')
           printf '%s\n' "${changed[@]}"
           for path in "${changed[@]}"; do
             case "$path" in
-              .copier-answers.art.yml|.copier-answers.pypackage-cpp.yml|AGENTS.md|docs/development/PROJECT_SKELETON_CONTRACT.md)
+              .copier-answers.art.yml|AGENTS.md)
                 ;;
               *)
-                echo "::error::Unexpected Copier documentation-refresh change: $path"
+                echo "::error::Unexpected ART Copier change: $path"
                 exit 1
                 ;;
             esac
           done
+          git add .copier-answers.art.yml AGENTS.md
+          git diff --cached --check
+          git commit -m 'Genuine Copier update ART documentation'
 
-      - name: Commit and push generated documentation
+      - name: Push generated documentation
         shell: bash
         run: |
           set -euo pipefail
-          git add .copier-answers.art.yml .copier-answers.pypackage-cpp.yml AGENTS.md docs/development/PROJECT_SKELETON_CONTRACT.md
-          git diff --cached --check
-          if git diff --cached --quiet; then
-            echo 'No Copier documentation changes required.'
-            exit 0
-          fi
-          git commit -m 'Refresh generated infrastructure documentation'
+          git status --short
           git push origin HEAD:docs/copier-refresh-cold-start
