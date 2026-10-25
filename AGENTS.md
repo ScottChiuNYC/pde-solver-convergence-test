@@ -46,6 +46,21 @@ For repository-wide CodeBinder PDF generation, validation, publication, Google D
 
 This local skill takes precedence over the general PDF skill for the repository CodeBinder pipeline.
 
+## Repository provenance and ownership
+
+Before structural or infrastructure changes, reconstruct how this repository was assembled:
+
+- inspect every `.copier-answers.*.yml` file present;
+- `.copier-answers.art.yml` identifies the ART revision that owns this skill router and PDF publication layer;
+- `.copier-answers.pypackage-cpp.yml`, when present, identifies the independent Python/C++ skeleton revision;
+- read `docs/development/PROJECT_SKELETON_CONTRACT.md` when present for project-local build, packaging, dependency, layout, and test conventions;
+- treat `.codebinderignore` as project-owned and `.codebinderignore.d/*` as composable owner-specific fragments; do not consolidate template-owned fragments into one shared generated file;
+- the PDF workflow intentionally pins its builder image by immutable GHCR digest. Do not replace that authority with a floating tag.
+
+The broader ecosystem and change-propagation model is documented at:
+
+https://github.com/ScottChiuNYC/agentic-repo-template/blob/main/docs/ecosystem-architecture.md
+
 ## Minimal operating rules
 
 - Prefer mature existing skills and native runtime tools over repository-specific reinvention.
