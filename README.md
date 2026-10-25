@@ -131,3 +131,16 @@ Local source changes do not change vcpkg's port recipe hash. Use a fresh consume
 ## Template updates
 
 Commit `.copier-answers.pypackage-cpp.yml` and project changes before `copier update -a .copier-answers.pypackage-cpp.yml --vcs-ref <template-tag>`. Template Git tags version updates independently of your project's version.
+## Infrastructure provenance
+
+This project composes two independent Copier overlays:
+
+- `.copier-answers.pypackage-cpp.yml` — Python/C++ build, packaging, dependency, test, and CI skeleton;
+- `.copier-answers.art.yml` — agent skill routing and repository-PDF publication infrastructure.
+
+For the canonical repository map, ownership boundaries, CodeBinder/GHCR dependency pinning, review-PDF design, rollout/rollback playbooks, and cold-start checklist, see:
+
+https://github.com/ScottChiuNYC/agentic-repo-template/blob/main/docs/ecosystem-architecture.md
+
+The project-local `docs/development/PROJECT_SKELETON_CONTRACT.md` remains the authority for build/package/layout conventions. Domain implementation authority remains the applicable frozen Essence and its audit/C2C evidence.
+
