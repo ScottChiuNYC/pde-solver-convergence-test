@@ -61,6 +61,10 @@ The broader ecosystem and change-propagation model is documented at:
 
 https://github.com/ScottChiuNYC/agentic-repo-template/blob/main/docs/ecosystem-architecture.md
 
+## Project coding conventions
+
+When `docs/development/PROJECT_SKELETON_CONTRACT.md` is present, it owns language-level coding standards, including Google C++ and PEP 8 where applicable and any project-specific compatibility exceptions. Read it for declarations, source, tests and examples, including when using ICC/C2C. ART does not override project-local policy. Do not run automatic formatters, add mandatory formatter-only CI, or mass-reformat unrelated code. Review modified lines and preserve intentional mathematical alignment.
+
 ## Minimal operating rules
 
 - Prefer mature existing skills and native runtime tools over repository-specific reinvention.
